@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مختبر التحرك الكتلي التفاعلي | إعداد المعلمة إسراء الرويح</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background-color: #f8fafc;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.8); opacity: 0.8; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+        .listening-ring::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 9999px;
+            border: 2px solid #ef4444;
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        canvas {
+            touch-action: none;
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased selection:bg-amber-200 selection:text-amber-900 flex flex-col min-h-screen">
+
+    <!-- الشريط العلوي -->
+    <header class="bg-slate-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-500 text-slate-900 p-2.5 rounded-xl shadow-md">
+                    <i class="fa-solid fa-mountain-sun text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-amber-400">مختبر التحرك الكتلي</h1>
+                    <p class="text-xs text-slate-300">محاكاة جيولوجية تفاعلية مدعومة بالصوت</p>
+                </div>
+            </div>
+
+            <!-- أزرار التحكم الصوتي -->
+            <div class="flex items-center gap-3">
+                <button id="voiceCommandBtn" type="button" onclick="toggleVoiceRecognition()" class="relative flex items-center gap-2 bg-rose-600 hover:bg-rose-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition shadow-md cursor-pointer">
+                    <i id="micIcon" class="fa-solid fa-microphone"></i>
+                    <span id="micText">أمر صوتي</span>
+                </button>
+                <button id="speakExplainBtn" type="button" onclick="speakCurrentExplanation()" class="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl font-bold text-sm transition shadow-md cursor-pointer">
+                    <i id="speakerIcon" class="fa-solid fa-volume-high"></i>
+                    <span>استمع للشرح</span>
+                </button>
+            </div>
+        </div>
+        <!-- شريط حالة الصوت -->
+        <div id="voiceStatusBar" class="hidden bg-slate-800 border-t border-slate-700 px-4 py-2 text-center text-xs sm:text-sm text-amber-300">
+            <span id="voiceStatusText">جاري الاستماع... قل: "اشرح التساقط"، "انزلاق دوراني"، "انسياب ركامي"، أو "شغل المحاكاة"</span>
+        </div>
+    </header>
+
+    <!-- المحتوى الرئيسي -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6 flex-grow w-full">
+
+        <!-- شريط اختيار النوع (التبويبات الثلاثة) -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- بطاقة 1: التساقط -->
+            <button type="button" onclick="selectType('fall')" id="tab-fall" class="type-tab text-right p-5 rounded-2xl border-2 border-amber-500 bg-amber-50/80 shadow-sm transition-all flex items-start gap-4 cursor-pointer">
+                <div class="bg-amber-500 text-white p-3 rounded-xl shrink-0">
+                    <i class="fa-solid fa-arrow-down-wide-short text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h2 class="text-lg font-extrabold text-slate-900">1. التساقط (Rockfall)</h2>
+                        <span class="text-xs bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full font-bold">سريع جداً</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mt-1">سقوط حر ومباشر للكتل الصخرية من الجروف شديدة الانحدار بفعل الجاذبية.</p>
+                </div>
+            </button>
+
+            <!-- بطاقة 2: الانزلاق -->
+            <button type="button" onclick="selectType('slide')" id="tab-slide" class="type-tab text-right p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-amber-300 shadow-sm transition-all flex items-start gap-4 cursor-pointer">
+                <div class="bg-slate-200 text-slate-700 p-3 rounded-xl shrink-0">
+                    <i class="fa-solid fa-hill-rockslide text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h2 class="text-lg font-extrabold text-slate-900">2. الانزلاق (Landslide)</h2>
+                        <span class="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">دوراني / انتقالي</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mt-1">تحرك كتلة متماسكة من الصخور أو التربة على طول سطح انزلاق مائل ومحدد.</p>
+                </div>
+            </button>
+
+            <!-- بطاقة 3: الانسياب -->
+            <button type="button" onclick="selectType('flow')" id="tab-flow" class="type-tab text-right p-5 rounded-2xl border-2 border-slate-200 bg-white hover:border-amber-300 shadow-sm transition-all flex items-start gap-4 cursor-pointer">
+                <div class="bg-slate-200 text-slate-700 p-3 rounded-xl shrink-0">
+                    <i class="fa-solid fa-water text-xl"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <h2 class="text-lg font-extrabold text-slate-900">3. الانسياب (Flow)</h2>
+                        <span class="text-xs bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">ركامي / أرضي</span>
+                    </div>
+                    <p class="text-sm text-slate-600 mt-1">تدفق المواد المفككة والطينية كسائل لزج نتيجة التشبع العالي بالمياه.</p>
+                </div>
+            </button>
+        </section>
+
+        <!-- شريط الأفرع الفرعية -->
+        <section id="subTypesSection" class="hidden bg-white p-4 rounded-2xl border border-amber-300 shadow-sm flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-slate-800 font-bold text-sm">
+                <i class="fa-solid fa-code-branch text-amber-500"></i>
+                <span id="subTypesLabel">اختر النوع الفرعي:</span>
+            </div>
+            <div id="subTypesButtons" class="flex flex-wrap gap-2"></div>
+        </section>
+
+        <!-- قسم المحاكاة وإدخال البيانات -->
+        <section class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <!-- لوحة المحاكاة البصرية -->
+            <div class="lg:col-span-7 bg-white rounded-2xl shadow-md border border-slate-200 overflow-hidden flex flex-col">
+                <div class="bg-slate-50 px-5 py-3.5 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <h3 id="canvasTitle" class="font-bold text-slate-800">محاكاة: التساقط الصخري</h3>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="triggerSimulation()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-4 py-1.5 rounded-xl text-sm transition flex items-center gap-1.5 shadow-sm cursor-pointer">
+                            <i class="fa-solid fa-play"></i>
+                            <span>ابدأ المحاكاة</span>
+                        </button>
+                        <button type="button" onclick="resetSimulation()" title="إعادة ضبط" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-3 py-1.5 rounded-xl text-sm transition cursor-pointer">
+                            <i class="fa-solid fa-rotate-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="canvasContainer" class="relative w-full h-80 sm:h-96 bg-sky-100">
+                    <canvas id="simCanvas"></canvas>
+                    <div id="riskBadge" class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3.5 py-2 rounded-xl shadow border border-slate-200 text-xs sm:text-sm font-bold flex items-center gap-2">
+                        <i class="fa-solid fa-shield-halved text-emerald-600"></i>
+                        <span id="riskText">الحالة: مستقرة نسبياً</span>
+                    </div>
+                </div>
+
+                <div class="p-5 bg-slate-50 border-t border-slate-200 flex-grow">
+                    <h4 class="font-extrabold text-slate-900 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-book-open text-amber-600"></i>
+                        <span id="detailTitle">كيف يحدث التساقط الصخري؟</span>
+                    </h4>
+                    <p id="detailText" class="text-slate-700 text-sm sm:text-base leading-relaxed">
+                        يحدث التساقط عندما تنفصل كتل صخرية عن جرف شديد الانحدار أو عمودي (زاوية ميل كبيرة جداً) نتيجة التجوية والتشققات، فتسقط في الهواء سقوطاً حراً أو تتدحرج بسرعة فائقة تحت تأثير الجاذبية الأرضية المباشر لتتراكم في الأسفل على شكل ركام صخري.
+                    </p>
+                </div>
+            </div>
+
+            <!-- لوحة إدخال البيانات -->
+            <div class="lg:col-span-5 bg-white rounded-2xl shadow-md border border-slate-200 p-5 flex flex-col justify-between space-y-5">
+                <div>
+                    <div class="border-b border-slate-100 pb-3 mb-4">
+                        <h3 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-amber-500"></i>
+                            <span>إدخال البيانات الجيولوجية</span>
+                        </h3>
+                        <p class="text-xs text-slate-500 mt-1">قم بتعديل العوامل المؤثرة لمشاهدة تأثيرها الفوري على المنحدر</p>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label for="slopeInput" class="text-sm font-bold text-slate-700">
+                                    <i class="fa-solid fa-angle-up text-amber-600 ml-1"></i> زاوية الانحدار (درجة)
+                                </label>
+                                <div class="flex items-center gap-1">
+                                    <input type="number" id="slopeNumber" min="15" max="88" value="78" class="w-16 text-center font-bold text-sm bg-white border border-slate-300 rounded-lg py-1">
+                                    <span class="text-xs font-bold text-slate-500">°</span>
+                                </div>
+                            </div>
+                            <input type="range" id="slopeInput" min="15" max="88" value="78" class="w-full accent-amber-500 cursor-pointer">
+                            <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+                                <span>15° (منحدر لطيف)</span>
+                                <span>50° (شديد)</span>
+                                <span>88° (جرف عمودي)</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <div class="flex justify-between items-center mb-1.5">
+                                <label for="waterInput" class="text-sm font-bold text-slate-700">
+                                    <i class="fa-solid fa-droplet text-sky-500 ml-1"></i> التشبع بالمياه (%)
+                                </label>
+                                <div class="flex items-center gap-1">
+                                    <input type="number" id="waterNumber" min="0" max="100" value="15" class="w-16 text-center font-bold text-sm bg-white border border-slate-300 rounded-lg py-1">
+                                    <span class="text-xs font-bold text-slate-500">%</span>
+                                </div>
+                            </div>
+                            <input type="range" id="waterInput" min="0" max="100" value="15" class="w-full accent-sky-500 cursor-pointer">
+                            <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+                                <span>0% (جاف تماماً)</span>
+                                <span>50% (رطب)</span>
+                                <span>100% (مشبع بالكامل)</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                            <label for="materialSelect" class="block text-sm font-bold text-slate-700 mb-2">
+                                <i class="fa-solid fa-layer-group text-emerald-600 ml-1"></i> طبيعة الصخور والتربة
+                            </label>
+                            <select id="materialSelect" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-bold text-slate-800 focus:outline-none focus:border-amber-500">
+                                <option value="fractured_rock">صخور صلبة متشققة (تناسب التساقط)</option>
+                                <option value="layered_rock">طبقات صخرية مائلة (تناسب الانزلاق)</option>
+                                <option value="loose_clay">تربة طينية وحطام مفكك (تناسب الانسياب)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="analysisBox" class="bg-amber-50 border border-amber-200 rounded-xl p-4 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-extrabold uppercase tracking-wider text-amber-800">التشخيص الجيولوجي للبيانات</span>
+                        <span id="predictedTypeBadge" data-recommended="fall" class="text-xs font-bold bg-amber-500 text-white px-2.5 py-0.5 rounded-full">الأنسب: التساقط</span>
+                    </div>
+                    <p id="analysisFeedback" class="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed">
+                        الزاوية الحادة جداً (78°) مع الصخور المتشققة تجعل الجاذبية تتغلب مباشرة على تماسك الصخر، مما يسبب تساقطاً حراً.
+                    </p>
+                    <button type="button" onclick="applyRecommendedSimulation()" class="w-full mt-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                        <span>تطبيق النوع المطابق لبياناتك وتشغيله</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- دليل الأوامر الصوتية -->
+        <section class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 sm:p-5">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="bg-rose-100 text-rose-600 p-2.5 rounded-xl">
+                        <i class="fa-solid fa-headset text-lg"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-900 text-sm sm:text-base">تفاعل بصوتك مع المختبر</h4>
+                        <p class="text-xs text-slate-500">اضغط على زر "أمر صوتي" في الأعلى وجرب نطق إحدى العبارات التالية:</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2 text-xs font-bold">
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200">"اشرح التساقط"</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200">"انزلاق دوراني"</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200">"انزلاق انتقالي"</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200">"انسياب ركامي"</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200">"انسياب أرضي"</span>
+                    <span class="bg-slate-100 text-slate-700 px-3 py-1.5 rounded-lg border border-slate-200">"شغل المحاكاة"</span>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- تذييل حفظ الحقوق -->
+    <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 mt-10 py-6">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3 text-center sm:text-right">
+            <div class="flex items-center gap-2.5">
+                <div class="bg-amber-500/20 text-amber-400 p-2 rounded-lg">
+                    <i class="fa-solid fa-chalkboard-user"></i>
+                </div>
+                <p class="text-sm font-bold text-white">
+                    إعداد وتصميم المعلمة: <span class="text-amber-400 text-base">إسراء الرويح</span>
+                </p>
+            </div>
+            <p class="text-xs text-slate-400">
+                جميع الحقوق محفوظة &copy; مختبر التحرك الكتلي التفاعلي - مادة الجيولوجيا
+            </p>
+        </div>
+    </footer>
+
+    <!-- صندوق رسائل مخصص -->
+    <div id="toastMessage" class="fixed bottom-5 left-5 z-50 transform translate-y-24 opacity-0 pointer-events-none transition-all duration-300 bg-slate-900 text-white px-5 py-3 rounded-xl shadow-xl border border-slate-700 flex items-center gap-3 text-sm font-bold">
+        <i id="toastIcon" class="fa-solid fa-circle-info text-amber-400"></i>
+        <span id="toastText">رسالة النظام</span>
+    </div>
+
+    <script>
+        const massWastingData = {
+            fall: {
+                id: 'fall',
+                title: 'محاكاة: التساقط الصخري (Rockfall)',
+                detailTitle: 'كيف يحدث التساقط الصخري؟',
+                detailText: 'يحدث التساقط عندما تنفصل كتل صخرية عن جرف شديد الانحدار أو عمودي (زاوية 70° إلى 90°) نتيجة التجوية والتشققات، فتسقط في الهواء سقوطاً حراً أو تتدحرج بسرعة فائقة تحت تأثير الجاذبية الأرضية المباشر لتتراكم في الأسفل على شكل ركام صخري.',
+                voiceScript: 'التساقط الصخري: هو أسرع أنواع التحرك
